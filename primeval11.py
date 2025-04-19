@@ -1,5 +1,5 @@
 # you have 2 buckets of size 5 and 3, starting empty
-# you have a well of 5 starting energy
+# you have a well of 6 starting energy
 # your moves are:
 #   transfer energy from one bucket to the other
 #   take from well into a bucket (requires filling the bucket)
@@ -27,7 +27,7 @@ def to_mod_six(num):
 def solves(seq):
     big_bucket = 0
     small_bucket = 0
-    well = 5
+    well = 6
     for move in seq:
         if move == 0:
             if well + big_bucket < 5:
@@ -59,5 +59,16 @@ def solves(seq):
             return
 
 
-for i in range(100000):
-    solves(to_mod_six(i))
+for i in range(11000000):
+    new_seq = to_mod_six(i)
+    solves(new_seq)
+
+    # to_mod_six never generates 0 leading
+    # so we make it
+    # note that multiple 0 leading is equivalent to 0 such 0
+    new_seq = [0] + new_seq
+    solves(new_seq)
+
+# prints [3, 4, 3, 4, 2, 4, 3, 4]
+
+
