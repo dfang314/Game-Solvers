@@ -20,10 +20,13 @@ FLOWER_HARVEST_TIME = 1.9 # time to harvest a flower
 
 W_MOVE_SEC = (None, None) # x, z change for 1 second of holding w
 A_MOVE_SEC = (None, None) # x, z change for 1 second of holding a
-W_MOVE_SEC_NORM = (None, None) # normalized
-A_MOVE_SEC_NORM = (None, None) # normalized
 
 GET_POS_WAIT_TIME = 0.15 # amount of time to wait for coordinates to stabilize
+
+def hold_key(key, duration):
+  pydirectinput.keyDown(key)
+  time.sleep(duration)
+  pydirectinput.keyUp(key)
 
 def get_pos():
   time.sleep(GET_POS_WAIT_TIME)
@@ -41,41 +44,27 @@ def get_pos():
   # mmm.mmynnnn.nn*ooo.oo
   # where mmm.mm is the negative x, nnnn.nn is the y, * is some character (most of the time z) and ooo.oo is the negative z
   coordstr = pytesseract.image_to_string(im, config="--psm 7 -c tessedit_char_whitelist=0123456789yz.")
-  print("Coordinate string is", coordstr)
+  coordstr = coordstr[:-1] # parser always gives a newline at the end
   time.sleep(GET_POS_WAIT_TIME)
   pos = float(coordstr[:6]), float(coordstr[-6:])
   print("Current position", pos)
   return pos
 
 def calibrate():
-  global W_MOVE_SEC, A_MOVE_SEC, W_MOVE_SEC_NORM, A_MOVE_SEC_NORM
+  global W_MOVE_SEC, A_MOVE_SEC
   print("Calibrating...")
 
   startx, startz = get_pos()
-  pydirectinput.keyDown("w")
-  time.sleep(1)
-  pydirectinput.keyUp("w")
+  hold_key("w", 0.4)
   endx, endz = get_pos()
-  W_MOVE_SEC = endx - startx, endz - startz
-  size = (W_MOVE_SEC[0]**2 + W_MOVE_SEC[1]**2)**0.5
-  W_MOVE_SEC_NORM = W_MOVE_SEC[0] / size, W_MOVE_SEC[1] / size
-  print("1 second of W affects our coordinates by", W_MOVE_SEC)
-  pydirectinput.keyDown("s")
-  time.sleep(1)
-  pydirectinput.keyUp("s")
+  W_MOVE_SEC = (endx - startx) / 0.4, (endz - startz) / 0.4
+  hold_key("s", 0.4)
 
   startx, startz = get_pos()
-  pydirectinput.keyDown("a")
-  time.sleep(1)
-  pydirectinput.keyUp("a")
+  hold_key("a", 0.4)
   endx, endz = get_pos()
-  A_MOVE_SEC = endx - startx, endz - startz
-  size = (A_MOVE_SEC[0]**2 + A_MOVE_SEC[1]**2)**0.5
-  A_MOVE_SEC_NORM = A_MOVE_SEC[0] / size, A_MOVE_SEC[1] / size
-  print("1 second of A affects our coordinates by", A_MOVE_SEC)
-  pydirectinput.keyDown("d")
-  time.sleep(1)
-  pydirectinput.keyUp("d")
+  A_MOVE_SEC = (endx - startx) / 0.4, (endz - startz) / 0.4
+  hold_key("d", 0.4)
 
 def cycle():
   print("Starting a cycle")
@@ -83,25 +72,30 @@ def cycle():
     x, z = get_pos()
     dx, dz = flower[0] - x, flower[1] - z
 
-    # Use w and a as axes, take scalar projection to find out how much of each to press
-    amt_w = dx * W_MOVE_SEC_NORM[0] + dz * W_MOVE_SEC_NORM[1]
-    amt_a = dx * A_MOVE_SEC_NORM[0] + dz * A_MOVE_SEC_NORM[1]
+    # Use w and a are not necessarily axes due to inaccuracies
+    # We want
+    # W_MOVE_SEC[0]*amt_w + A_MOVE_SEC[0]*amt_a = dx
+    # W_MOVE_SEC[1]*amt_w + A_MOVE_SEC[1]*amt_a = dz
+    # [W[0] A[0]    [amt_w    [dx
+    #  W[1] A[1]] @  amt_a] =  dz]
+    # [amt_w    [A[1] -A[0]                              [dx
+    #  amt_a] =  -W[1] W[0]] / (W[0]*A[1] - A[0]*W[1]) @  dz]
+    # amt_w = (dx*A[1] - dz*A[0]) / (W[0]*A[1] - A[0]*W[1])
+    # amt_a = (-dx*W[1] + dz*W[0]) / (W[0]*A[1] - A[0]*W[1])
 
-    print(f"Walking {amt_w}secs of w and {amt_a}secs of a to get the next flower")
+    det = W_MOVE_SEC[0] * A_MOVE_SEC[1] - A_MOVE_SEC[0] * W_MOVE_SEC[1]
+    amt_w = (dx * A_MOVE_SEC[1] - dz * A_MOVE_SEC[0]) / det
+    amt_a = (-dx * W_MOVE_SEC[1] + dz * W_MOVE_SEC[0]) / det
+
     ws_key = "w" if amt_w > 0 else "s"
     ad_key = "a" if amt_a > 0 else "d"
 
-    pydirectinput.keyDown(ws_key)
-    time.sleep(abs(amt_w))
-    pydirectinput.keyUp(ws_key)
+    hold_key(ws_key, abs(amt_w))
+    hold_key(ad_key, abs(amt_a))
 
-    pydirectinput.keyDown(ad_key)
-    time.sleep(abs(amt_a))
-    pydirectinput.keyUp(ad_key)
-
-    pydirectinput.keyDown("e")
-    time.sleep(FLOWER_HARVEST_TIME)
-    pydirectinput.keyUp("e")
+    hold_key("e", FLOWER_HARVEST_TIME)
+  
+pyautogui.FAILSAFE = True
 
 time.sleep(STARTUP_TIME)
 
