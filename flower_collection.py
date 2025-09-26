@@ -2,26 +2,31 @@ import pyautogui
 import pydirectinput
 import time
 import pytesseract
+from PIL import Image
 
 STARTUP_TIME = 3 # seconds it takes before the script starts
-SCREENSHOT_REGION = (147, 127, 162, 15) # location of left, top, width, height of the coordinates on the screen
+
+IMAGE_RESIZE = 3 # ratio of resizing to help image parsing
+SCREENSHOT_REGION = (165, 128, 143, 14) # location of left, top, width, height of the coordinates on the screen
+
 FLOWER_PATH = [(507.09, 449.30),
-               (508.40, 383.33),
+               (507.40, 398.33),
                (444.30, 436.33),
                (464.05, 509.11),
                (405.50, 489.32),
-               (368.67, 511.33),
+               (380.17, 490.33),
                (369.95, 406.54),
                (407.46, 309.68),
                (458.15, 366.63),
                (486.50, 297.94)]
 
-FLOWER_HARVEST_TIME = 1.9 # time to harvest a flower
+FLOWER_HARVEST_TIME = 1.75 # time to harvest a flower
 
+CALIBRATION_SEC = 0.4 # how long to move for w and a during calibration
 W_MOVE_SEC = (None, None) # x, z change for 1 second of holding w
 A_MOVE_SEC = (None, None) # x, z change for 1 second of holding a
 
-GET_POS_WAIT_TIME = 0.15 # amount of time to wait for coordinates to stabilize
+GET_POS_WAIT_TIME = 0.1 # amount of time to wait for coordinates to stabilize
 
 def hold_key(key, duration):
   pydirectinput.keyDown(key)
@@ -32,20 +37,23 @@ def get_pos():
   time.sleep(GET_POS_WAIT_TIME)
   im = pyautogui.screenshot(region=SCREENSHOT_REGION)
 
-  # coordinates are bright green, set all other pixels to black to help ocr
+  # coordinates are bright green, filter into black onto white text
+  width, height = im.size
+  im = im.resize((width*IMAGE_RESIZE, height*IMAGE_RESIZE), resample=Image.BILINEAR)
   width, height = im.size
   for x in range(width):
     for y in range(height):
       r, g, b = im.getpixel((x, y))
-      if g < r + b - 10:
+      if g > 170 and r < 170 and b < 170:
         im.putpixel((x, y), (0, 0, 0))
+      else:
+        im.putpixel((x, y), (255, 255, 255))
   # through trial and error this config is goated
   # output in format
   # mmm.mmynnnn.nn*ooo.oo
   # where mmm.mm is the negative x, nnnn.nn is the y, * is some character (most of the time z) and ooo.oo is the negative z
   coordstr = pytesseract.image_to_string(im, config="--psm 7 -c tessedit_char_whitelist=0123456789yz.")
   coordstr = coordstr[:-1] # parser always gives a newline at the end
-  time.sleep(GET_POS_WAIT_TIME)
   pos = float(coordstr[:6]), float(coordstr[-6:])
   print("Current position", pos)
   return pos
@@ -55,16 +63,16 @@ def calibrate():
   print("Calibrating...")
 
   startx, startz = get_pos()
-  hold_key("w", 0.4)
+  hold_key("w", CALIBRATION_SEC)
   endx, endz = get_pos()
-  W_MOVE_SEC = (endx - startx) / 0.4, (endz - startz) / 0.4
-  hold_key("s", 0.4)
+  W_MOVE_SEC = (endx - startx) / CALIBRATION_SEC, (endz - startz) / CALIBRATION_SEC
+  hold_key("s", CALIBRATION_SEC)
 
   startx, startz = get_pos()
-  hold_key("a", 0.4)
+  hold_key("a", CALIBRATION_SEC)
   endx, endz = get_pos()
-  A_MOVE_SEC = (endx - startx) / 0.4, (endz - startz) / 0.4
-  hold_key("d", 0.4)
+  A_MOVE_SEC = (endx - startx) / CALIBRATION_SEC, (endz - startz) / CALIBRATION_SEC
+  hold_key("d", CALIBRATION_SEC)
 
 def cycle():
   print("Starting a cycle")
@@ -101,6 +109,8 @@ time.sleep(STARTUP_TIME)
 
 calibrate()
 
-cycle()
+for cycle_num in range(10):
+  print("Starting cycle number", cycle_num)
+  cycle()
 
 pyautogui.alert(f"toph hella fatty ong") 
