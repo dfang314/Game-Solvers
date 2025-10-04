@@ -39,10 +39,10 @@ def hold_keys(keys, duration):
     pydirectinput.keyUp(key)
 
 def ordinal(x):
-    suffix = 'th'
-    if (x % 100) < 11 or (x % 100) > 13:
-        suffix = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][x % 10]
-    return str(x) + suffix
+  suffix = 'th'
+  if (x % 100) < 11 or (x % 100) > 13:
+    suffix = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][x % 10]
+  return str(x) + suffix
 
 def get_pos():
   time.sleep(GET_POS_WAIT_TIME)
