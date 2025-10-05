@@ -90,6 +90,7 @@ def craft_pill(no_herb_img):
     click_at(CRAFT_X, CRAFT_Y)
 
 pyautogui.FAILSAFE = True
+pydirectinput.PAUSE = 0.02 # reduce pause time because there is so much lag in jiggling and clicking so much
 
 no_herb_img = Image.open('no_herb.png')
 
