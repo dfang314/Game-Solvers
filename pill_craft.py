@@ -1,5 +1,5 @@
-# In order to bypass OCR, image parsing, etc. and the related headaches,
-# we just blindly click based on hard coded values. Therefore, this
+# In order to bypass OCR, we don't try to fully understand the game state.
+# Instead, we just check basic intersection Therefore, this
 # program only crafts one type of pill, and each run requires reconfiging
 # some global constants.
 
