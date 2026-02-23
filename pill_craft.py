@@ -50,6 +50,8 @@ HERB_REGION_4 = (1720, 400, 120, 120) # region to screenshot to see if fourth he
 
 MIN_DIFF_HERB_IMG = 1000 # minimum difference between an image and the image of no herb to classify as "herb"
 
+KEEP_CHECKING = False
+
 def click_at(x, y):
   # pydirectinput doesn't support non-instant moving so we need to jiggle
   pydirectinput.moveTo(x + JIGGLE_X, y + JIGGLE_Y)
@@ -69,26 +71,32 @@ def has_herb(img, no_herb_img):
   return diff > MIN_DIFF_HERB_IMG
 
 def craft_pill(no_herb_img):
-
-  while not has_herb(pyautogui.screenshot(region=HERB_REGION_1), no_herb_img):
+  if KEEP_CHECKING:
+    while not has_herb(pyautogui.screenshot(region=HERB_REGION_1), no_herb_img):
+      click_at(TOP_LEFT_X + (HERB_1_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_1_ROW - 1) * GRID_D)
+      click_at(TOP_LEFT_X + (HERB_1_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_1_ROW - 1) * GRID_D + USE_Y_CHANGE)
+    while not has_herb(pyautogui.screenshot(region=HERB_REGION_2), no_herb_img):
+      click_at(TOP_LEFT_X + (HERB_2_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_2_ROW - 1) * GRID_D)
+      click_at(TOP_LEFT_X + (HERB_2_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_2_ROW - 1) * GRID_D + USE_Y_CHANGE)
+    while not has_herb(pyautogui.screenshot(region=HERB_REGION_3), no_herb_img):
+      click_at(TOP_LEFT_X + (HERB_3_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_3_ROW - 1) * GRID_D)
+      click_at(TOP_LEFT_X + (HERB_3_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_3_ROW - 1) * GRID_D + USE_Y_CHANGE)
+    while not has_herb(pyautogui.screenshot(region=HERB_REGION_4), no_herb_img):
+      click_at(TOP_LEFT_X + (HERB_4_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_4_ROW - 1) * GRID_D)
+      click_at(TOP_LEFT_X + (HERB_4_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_4_ROW - 1) * GRID_D + USE_Y_CHANGE)
+    while has_herb(pyautogui.screenshot(region=HERB_REGION_1), no_herb_img):
+      click_at(CRAFT_X, CRAFT_Y)
+  else:
     click_at(TOP_LEFT_X + (HERB_1_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_1_ROW - 1) * GRID_D)
     click_at(TOP_LEFT_X + (HERB_1_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_1_ROW - 1) * GRID_D + USE_Y_CHANGE)
-
-  while not has_herb(pyautogui.screenshot(region=HERB_REGION_2), no_herb_img):
     click_at(TOP_LEFT_X + (HERB_2_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_2_ROW - 1) * GRID_D)
     click_at(TOP_LEFT_X + (HERB_2_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_2_ROW - 1) * GRID_D + USE_Y_CHANGE)
-
-  while not has_herb(pyautogui.screenshot(region=HERB_REGION_3), no_herb_img):
     click_at(TOP_LEFT_X + (HERB_3_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_3_ROW - 1) * GRID_D)
     click_at(TOP_LEFT_X + (HERB_3_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_3_ROW - 1) * GRID_D + USE_Y_CHANGE)
-
-  while not has_herb(pyautogui.screenshot(region=HERB_REGION_4), no_herb_img):
     click_at(TOP_LEFT_X + (HERB_4_COL - 1) * GRID_D, TOP_LEFT_Y + (HERB_4_ROW - 1) * GRID_D)
     click_at(TOP_LEFT_X + (HERB_4_COL - 1) * GRID_D + USE_X_CHANGE, TOP_LEFT_Y + (HERB_4_ROW - 1) * GRID_D + USE_Y_CHANGE)
-
-  while has_herb(pyautogui.screenshot(region=HERB_REGION_1), no_herb_img):
     click_at(CRAFT_X, CRAFT_Y)
-
+  
 pyautogui.FAILSAFE = True
 pydirectinput.PAUSE = 0.02 # reduce pause time because there is so much lag in jiggling and clicking so much
 
