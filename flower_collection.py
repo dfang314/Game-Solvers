@@ -6,26 +6,29 @@ from PIL import Image
 
 STARTUP_TIME = 3 # seconds it takes before the script starts
 
-IMAGE_RESIZE = 3 # ratio of resizing to help image parsing
-SCREENSHOT_REGION = (166, 128, 143, 14) # location of left, top, width, height of the coordinates on the screen
+IMAGE_RESIZE = 2 # ratio of resizing to help image parsing
+SCREENSHOT_REGION = (2240, 1040, 236, 20) # location of left, top, width, height of the coordinates on the screen
 
-FLOWER_PATH = [(507.09, 449.30),
-               (507.40, 398.33),
-               (444.30, 436.33),
-               (464.05, 509.11),
-               (405.50, 489.32),
-               (380.17, 490.33),
-               (369.95, 406.54),
-               (407.46, 309.68),
-               (458.15, 366.63),
-               (486.50, 297.94)]
+FLOWER_PATH = [(596.67, 505.50),
+               (571.05, 556.15),
+               (504.55, 612.41),
+               (496.50, 665.55),
+               (468.05, 597.22),
+               (533.75, 536.30),
+               (583.00, 491.04),]
 
-FLOWER_HARVEST_TIME = 1.4 # time to harvest a flower
+FLOWER_HARVEST_TIME = 2.5 # time to harvest a flower
 
 # These globals are related to calibration. Some are not usable until calibration is complete
 CALIBRATION_SEC = 0.4 # how long to move for w and a during calibration
 W_MOVE_SEC = (None, None) # x, z change for 1 second of holding w
 A_MOVE_SEC = (None, None) # x, z change for 1 second of holding a
+
+# if outside expected, assume failed coord read
+X_MIN_EXPECTED = 400
+X_MAX_EXPECTED = 700
+Z_MIN_EXPECTED = 400
+Z_MAX_EXPECTED = 700
 
 GET_POS_TRIES = 3 # amount of times to try get_pos until you crash
 JIGGLE_TIME = 0.01 # time to move to change position when retrying get_pos
@@ -57,7 +60,7 @@ def get_pos():
     for x in range(width):
       for y in range(height):
         r, g, b = im.getpixel((x, y))
-        if g > 180 and r < 100 and b < 100:
+        if r+b+g>540:
           im.putpixel((x, y), (0, 0, 0))
         else:
           im.putpixel((x, y), (255, 255, 255))
@@ -73,6 +76,8 @@ def get_pos():
     coordstr = coordstr[:-1] # parser always gives a newline at the end
     try:
       pos = float(coordstr[:5]) / 100, float(coordstr[-5:]) / 100
+      if pos[0] < X_MIN_EXPECTED or pos[0] > X_MAX_EXPECTED or pos[1] < Z_MIN_EXPECTED or pos[1] > Z_MAX_EXPECTED:
+        raise ValueError
       print("Current position", pos)
       return pos
     except ValueError:
@@ -127,18 +132,17 @@ def cycle():
 
     hold_keys([ws_key], amt_w)
     hold_keys([ad_key], amt_a)
-
     # new flower needs to get pos so we can start that while still harvesting this flower
     hold_keys(["e"], FLOWER_HARVEST_TIME - GET_POS_WAIT_TIME) 
   
 pyautogui.FAILSAFE = True
-
+pydirectinput.PAUSE = 0.04
 time.sleep(STARTUP_TIME)
 
 calibrate()
 
-for cycle_num in range(10):
+for cycle_num in range(3500):
   print("Starting cycle number", cycle_num)
   cycle()
 
-pyautogui.alert(f"toph hella fatty ong") 
+pyautogui.alert(f"toph hella fatty ong")
